@@ -34,6 +34,8 @@ import errno
 import getopt
 import re
 import string
+import fcntl
+import struct
 
 ###############################################################################
 ### Default Options
@@ -188,9 +190,15 @@ def serial_open(device_path, baudrate, databits, stopbits, parity, flow_control)
     # Set new termios attributes
     try:
         termios.tcsetattr(fd, termios.TCSANOW, tty_attr)
+        TIOCMBIC = getattr(termios, 'TIOCMBIC', 0x5417)
+        TIOCM_DTR = getattr(termios, 'TIOCM_DTR', 0x002)
+        TIOCM_DTR_str = struct.pack('I', TIOCM_DTR)
+        fcntl.ioctl(fd, TIOCMBIC, TIOCM_DTR_str)
+        #import pdb
+        #pdb.set_trace()
+        #termios.tcsetattr(fd, termios.TIOCMBIC, termios.TIOCM_DTR)
     except termios.error as err:
         raise Exception("Setting serial port options: %s" % str(err))
-
     # Return the fd
     return fd
 
